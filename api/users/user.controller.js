@@ -1,5 +1,6 @@
 // Contains the logic for processing HTTP requests related to user creation.
 //
+
 const {
   getStaff,
   createStaff,
@@ -7,6 +8,11 @@ const {
   deleteStaff,
   getStaffByEmail,
   getUserByEmailAndRole,
+  getInternById,
+  uploadMedical,
+  getParticipationById,
+  createParticipation,
+  updatePassword,
 
   getStudents,
   getUserById,
@@ -16,6 +22,8 @@ const {
   deleteStudent,
   updateStudentPermanent,
   updateStudentMedical,
+  createInternRecord,
+  updateParticipation,
 
   createParent,
   deleteParent,
@@ -142,6 +150,32 @@ module.exports = {
     });
   },
 
+  // uploadMedical: (req, res) => {
+  //   upload.array("imagesMedical", 5)(req, res, (err) => {
+  //     if (err) {
+  //       console.error(err);
+  //       return res.status(500).json({ success: false, message: "File upload error" });
+  //     }
+
+  //   const data = {
+  //     imagesMedical: req.files.map((file) => file.filename),
+  //     imagesStd_id: req.body.imagesStd_id,
+  //   };
+
+  //   uploadMedical(data, (error, results) => {
+  //     if (error) {
+  //       console.error(error);
+  //       return res
+  //         .status(500)
+  //         .json({ success: false, message: "Internal Server Error" });
+  //     }
+  //     res.status(200).json({
+  //       success: true,
+  //       message: "File uploaded and data inserted successfully",
+  //     });
+  //   });
+  // },
+
   // getStaffById: (req, res) => {
   //   // Extract the id from the url
   //   const id = req.params.id;
@@ -200,7 +234,7 @@ module.exports = {
         year: results.year,
         sem: results.sem,
         department: results.d_name,
-        parent_name: results.parent_name,
+        pname: results.pname,
         p_cid: results.p_cid,
         p_email: results.p_email,
         relation: results.relation,
@@ -212,11 +246,68 @@ module.exports = {
         thram_no: results.thram_no,
         country: results.country,
         image_url: results.image_url,
+        password: results.password,
         blood_group: results.blood_group,
         age: results.age,
         diagnosis: results.diagnosis,
         description: results.description,
+        Company_name: results.Company_name,
+        Start_date: results.Start_date,
+        End_date: results.End_date,
+        iDescription: results.iDescription,
       });
+    });
+  },
+
+  getInternById: (req, res) => {
+    // Extract the id from the url
+    const id = req.params.id;
+    getInternById(id, (err, results) => {
+      if (err) {
+        console.log(err);
+        return res.status(500).json({
+          message: "Internal Server Error",
+        });
+      }
+      if (!results || results.length === 0) {
+        console.log("Internship of a Student not found");
+        return res.status(404).json({
+          message: "Internship of a Student not found",
+        });
+      }
+
+      // Send the user profile details as JSON response
+      return res.status(200).json(results);
+
+      // // Send the user profile details as JSON response
+      // return res.status(200).json({
+      //   Company_name: results.Company_name,
+      //   Start_date: results.Start_date,
+      //   End_date: results.End_date,
+      //   iDescription: results.iDescription,
+      //   iStd_id: results.iStd_id,
+      // });
+    });
+  },
+
+  getParticipationById: (req, res) => {
+    // Extract the id from the url
+    const id = req.params.id;
+    getParticipationById(id, (err, results) => {
+      if (err) {
+        console.log(err);
+        return res.status(500).json({
+          message: "Internal Server Error",
+        });
+      }
+      if (!results || results.length === 0) {
+        console.log("Participation record of a Student not found");
+        return res.status(404).json({
+          message: "Participation record of a Student not found",
+        });
+      }
+      // Send the user profile details as JSON response
+      return res.status(200).json(results);
     });
   },
 
@@ -318,6 +409,74 @@ module.exports = {
       }
       return res.status(200).json({
         message: "Student deleted successfully",
+      });
+    });
+  },
+
+  createInternRecord: (req, res) => {
+    const body = req.body;
+    createInternRecord(body, (err, results) => {
+      if (err) {
+        console.log(err);
+        return res.status(500).json({
+          message: "Database Connection error",
+        });
+      }
+      console.log("InternshipRecord created successfully. Results:", results);
+      return res.status(200).json({
+        data: results,
+      });
+    });
+  },
+
+  createParticipation: (req, res) => {
+    const body = req.body;
+    // calling a create service here with two parameter
+    // It has a callback
+    createParticipation(body, (err, results) => {
+      if (err) {
+        console.log(err);
+        return res.status(500).json({
+          message: "Database Connection error",
+        });
+      }
+      console.log(
+        "Participation record inserted successfully. Results:",
+        results
+      );
+      return res.status(200).json({
+        data: results,
+      });
+    });
+  },
+
+  updateParticipation: (req, res) => {
+    const recordId = parseInt(req.params.record_id);
+    const body = req.body;
+    updateParticipation(recordId, (err, results) => {
+      if (err) {
+        console.log(err);
+        return;
+      }
+      return res.status(200).json({
+        message: "Participation record data Updated Successful",
+      });
+    });
+  },
+
+  updatePassword: (req, res) => {
+    const body = req.body;
+
+    updatePassword(body, (err, results) => {
+      if (err) {
+        console.log(err);
+        return res.status(500).json({
+          message: "Error updating password",
+        });
+      }
+      return res.status(200).json({
+        message: "Password updated successfully",
+        data: results,
       });
     });
   },

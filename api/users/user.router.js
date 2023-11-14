@@ -10,6 +10,13 @@ const {
   getStudents,
   updateStudentPermanent,
   updateStudentMedical,
+  createInternRecord,
+  getInternById,
+  // uploadMedical,
+  getParticipationById,
+  createParticipation,
+  updateParticipation,
+  updatePassword,
 
   getStaff,
   createStaff,
@@ -32,14 +39,21 @@ const { checkToken } = require("../../auth/token_validation");
 
 router.post("/login", login);
 router.post("/loginRole", loginRole);
+router.patch("/updatePassword", updatePassword);
 
 // Router for Student
 router.get("/student", getStudents);
 router.get("/student/:id", getUserById);
+router.get("/student/intern/:id", getInternById);
+router.get("/student/participation/:id", getParticipationById);
+// router.post("/student/upload/medical", uploadMedical);
 router.post("/student", createUser);
+router.post("/student/participation", createParticipation);
 router.patch("/student", updateStudent);
 router.patch("/student/permanent", updateStudentPermanent);
 router.patch("/student/medical", updateStudentMedical);
+router.patch("/student/participation/:recordId", updateParticipation);
+router.post("/student/internship", createInternRecord);
 router.delete("/student", deleteStudent);
 
 // Router for staff

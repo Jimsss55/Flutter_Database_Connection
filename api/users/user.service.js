@@ -1,5 +1,6 @@
 // It will call the services from the controller
 const pool = require("../../database.js");
+const bcrypt = require("bcrypt");
 
 module.exports = {
   // Creating a method called create
@@ -102,6 +103,20 @@ WHERE staff_id = ?`,
       }
     );
   },
+
+  // // Define the uploadMedical function
+  // uploadMedical: (data, callBack) => {
+  //   pool.query(
+  //     `INSERT INTO Medical_Images(imagesMedical, imagesStd_id) VALUES (?, ?)`,
+  //     [data.imagesMedical, data.imagesStd_id],
+  //     (error, results, fields) => {
+  //       if (error) {
+  //         return callBack(error);
+  //       }
+  //       return callBack(null, results);
+  //     }
+  //   );
+  // },
 
   // Student
 
@@ -216,33 +231,43 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`, //At runtime it will be replaced by the values
       Student.thram_no,
       Student.country, 
       Student.image_url,
+      Student.password,
       Department.department_id, 
       Department.d_name,
-      Parents_Guardian.name AS parent_name,
       Parents_Guardian.p_cid,
+      Parents_Guardian.pname,
       Parents_Guardian.p_email,
       Parents_Guardian.relation,
       Parents_Guardian.pcontact_num,
       MedicalRecord.blood_group,
       MedicalRecord.age,
       MedicalRecord.diagnosis,
-      MedicalRecord.description
-    FROM 
+      MedicalRecord.description,
+      InternshipRecord.Company_name,
+      InternshipRecord.Start_date,
+      InternshipRecord.End_date,
+      InternshipRecord.iDescription
+  FROM 
       Student 
-    JOIN 
+  JOIN 
       Department 
-    ON 
+  ON 
       Student.department = Department.department_id
-    JOIN
+  JOIN
       Parents_Guardian
-    ON
+  ON
       Parents_Guardian.pstudent_num = Student.student_id
-    LEFT JOIN
+  LEFT JOIN
       MedicalRecord
-    ON
+  ON
       MedicalRecord.mStudent_id = Student.student_id
-    WHERE
-      Student.student_id = ?;`,
+  LEFT JOIN
+      InternshipRecord
+  ON
+      InternshipRecord.iStd_id = Student.student_id
+  WHERE
+      Student.student_id = ?;
+  `,
       [id],
       (error, results, fields) => {
         if (error) {
@@ -318,10 +343,10 @@ WHERE student_id = ?`,
 
   updateStudentMedical: (data, callBack) => {
     pool.query(
-      `UPDATE Student
+      `UPDATE MedicalRecord
 
 SET   blood_group=?, age=?,description=?, diagnosis=?
-WHERE student_id = ?`,
+WHERE mStudent_id = ?`,
       [
         data.blood_group,
         data.age,
@@ -362,16 +387,167 @@ WHERE student_id = ?`,
     );
   },
 
+  createInternRecord: (data, callBack) => {
+    pool.query(
+      `INSERT INTO InternshipRecord(Company_name,Start_date,End_date,iDescription,iStd_id)
+VALUES(?,?,?,?,?)`, //At runtime it will be replaced by the values,
+      [
+        //Values for each question marks
+        data.Company_name,
+        data.Start_date,
+        data.End_date,
+        data.iDescription,
+        data.iStd_id,
+      ],
+      // Callback function
+      (error, results, fields) => {
+        if (error) {
+          return callBack(error);
+        }
+        return callBack(null, results);
+      }
+    );
+  },
+
+  getInternById: (id, callBack) => {
+    //console.log([id]);
+    pool.query(
+      `Select * from InternshipRecord where iStd_id=?;`,
+      [id],
+
+      (error, results, fields) => {
+        if (error) {
+          return callBack(error);
+        }
+        return callBack(null, results);
+      }
+    );
+  },
+
+  uploadMedical: (data, callBack) => {
+    pool.query(
+      `INSERT INTO Medical_Images(imagesMedical, imagesStd_id) VALUES (?, ?)`,
+      [data.imagesMedical, data.imagesStd_id],
+      (error, results, fields) => {
+        if (error) {
+          return callBack(error);
+        }
+        return callBack(null, results);
+      }
+    );
+  },
+
+  getMedicalById: (id, callBack) => {
+    pool.query(
+      `SELECT * FROM Medical_Images WHERE imagesStd_id = ?`,
+      [id],
+      (error, results, fields) => {
+        if (error) {
+          return callBack(error);
+        }
+        return callBack(null, results);
+      }
+    );
+  },
+
+  getParticipationById: (id, callBack) => {
+    pool.query(
+      `SELECT * FROM Participation WHERE participation_Std_id = ?`,
+      [id],
+      (error, results, fields) => {
+        if (error) {
+          return callBack(error);
+        }
+        return callBack(null, results);
+      }
+    );
+  },
+
+  createParticipation: (data, callBack) => {
+    pool.query(
+      `INSERT INTO Participation( participation_name, year, rank_position, participation_Std_id, grade_year)
+VALUES(?,?,?,?,?)`, //At runtime it will be replaced by the values,
+      [
+        //Values for each question marks
+        data.participation_name,
+        data.year,
+        data.rank_position,
+        data.participation_Std_id,
+        data.grade_year,
+      ],
+      // Callback function
+      (error, results, fields) => {
+        if (error) {
+          return callBack(error);
+        }
+        return callBack(null, results);
+      }
+    );
+  },
+
+  updateParticipation: (data, callBack) => {
+    pool.query(
+      `Update Participation SET  participation_name=?, year=?, rank_position=?, grade_year=?, participation_Std_id=?
+      WHERE record_id = ?`,
+      [
+        data.participation_name,
+        data.year,
+        data.rank_position,
+        data.grade_year,
+        data.participation_Std_id,
+        data.record_id,
+      ],
+      (error, results, fields) => {
+        if (error) {
+          callBack(error);
+        }
+        console.log("Participation record data updated successfully");
+        console.log("Updated participation record data:", results[0]);
+        return callBack(null, results);
+      }
+    );
+  },
+
+  updatePassword: (data, callBack) => {
+    // Generate a salt to use for hashing
+    const saltRounds = 10;
+    bcrypt.genSalt(saltRounds, (saltError, salt) => {
+      if (saltError) {
+        return callBack(saltError);
+      }
+
+      // Hash the password using the generated salt
+      bcrypt.hash(data.password, salt, (hashError, hashedPassword) => {
+        if (hashError) {
+          return callBack(hashError);
+        }
+
+        // Execute an SQL query to update the hashed password in the 'Student' table
+        pool.query(
+          `UPDATE Student SET password=? WHERE student_id = ?`,
+          [hashedPassword, data.student_id],
+          (error, results, fields) => {
+            if (error) {
+              return callBack(error);
+            }
+            console.log("Password updated successfully");
+            return callBack(null, results);
+          }
+        );
+      });
+    });
+  },
+
   // Parent
   createParent: (data, callBack) => {
     pool.query(
-      `INSERT INTO Parents_Guardian( pcontact_num, name, p_cid, p_email,relation, pstudent_num
+      `INSERT INTO Parents_Guardian( pcontact_num, pname, p_cid, p_email,relation, pstudent_num
 )
 VALUES(?,?,?,?,?,?)`, //At runtime it will be replaced by the values,
       [
         //Values for each question marks
         data.pcontact_num,
-        data.name,
+        data.pname,
         data.p_cid,
         data.p_email,
         data.relation,
@@ -403,10 +579,10 @@ VALUES(?,?,?,?,?,?)`, //At runtime it will be replaced by the values,
   updateParent: (data, callBack) => {
     pool.query(
       `UPDATE Parents_Guardian
-SET name=?,pcontact_num=?, p_cid=?, p_email=?, relation=?
+SET pname=?,pcontact_num=?, p_cid=?, p_email=?, relation=?
 WHERE pstudent_num = ?`,
       [
-        data.name,
+        data.pname,
         data.pcontact_num,
         data.p_cid,
         data.p_email,
